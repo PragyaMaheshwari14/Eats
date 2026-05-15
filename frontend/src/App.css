@@ -1,0 +1,24 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  background: #000;
+  /* Horizontal scroll blocked at root — vertical scroll is page's responsibility */
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100%;
+  /* Do NOT set height:100% here — it would cap auth pages and prevent body scroll */
+  overflow-x: hidden;
+}

@@ -1,0 +1,73 @@
+/* ─── Instagram-style Theme ─── */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Dark base (Instagram dark mode) */
+  --color-bg:           #000000;
+  --color-surface:      #1a1a1a;
+  --color-surface-alt:  #262626;
+  --color-border:       #363636;
+  --color-text:         #f5f5f5;
+  --color-text-secondary: #a8a8a8;
+  --color-accent:       #0095f6;
+  --color-accent-hover: #1aa3ff;
+  --color-danger:       #ed4956;
+
+  --radius-xs: 2px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  --font-stack: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.6);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.5);
+
+  --transition-base: 150ms cubic-bezier(.4,0,.2,1);
+
+  /* Layout */
+  --sidebar-width: 72px;
+  --sidebar-width-expanded: 245px;
+}
+
+/* ─── Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  /* height:auto lets auth/form pages taller than the viewport scroll naturally.
+     The reel page uses position:fixed so it's unaffected. */
+  height: auto;
+  min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  width: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-stack);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.4;
+  /* Vertical scroll via body — each page controls its own overflow.
+     overflow-x is handled on <html> above. */
+  overflow-y: auto;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+a:hover { color: var(--color-accent-hover); }
+::selection { background: var(--color-accent); color: #fff; }

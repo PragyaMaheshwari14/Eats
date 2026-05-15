@@ -1,0 +1,232 @@
+@import './theme.css';
+
+/* ─── Page ─── */
+.profile-page {
+  min-height: 100dvh;
+  background: var(--color-bg);
+  overflow-y: auto;
+  /* On mobile, leave space for the 56px bottom nav */
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+/* On tablet/desktop, sidebar replaces bottom nav — no bottom padding */
+@media (min-width: 768px) {
+  .profile-page {
+    padding-bottom: 0;
+    /* Offset content by sidebar width */
+    margin-left: var(--sidebar-width);
+  }
+}
+
+@media (min-width: 1264px) {
+  .profile-page {
+    margin-left: var(--sidebar-width-expanded);
+  }
+}
+
+/* ─── Top bar ─── */
+.profile-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 12px var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  background: var(--color-bg);
+  z-index: 50;
+}
+
+.profile-topbar-back {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--transition-base);
+}
+.profile-topbar-back:hover { background: var(--color-surface-alt); }
+.profile-topbar-back:active { opacity: .7; }
+
+.profile-topbar-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Inner content ─── */
+.profile-inner {
+  max-width: 935px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .profile-inner {
+    padding: var(--space-6) var(--space-6) var(--space-8);
+  }
+}
+
+/* ─── Header row: avatar + info ─── */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+@media (min-width: 600px) {
+  .profile-header {
+    gap: var(--space-8);
+    margin-bottom: var(--space-6);
+  }
+}
+
+/* ─── Avatar ─── */
+.profile-avatar {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  padding: 3px;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888) border-box;
+  border: 3px solid transparent;
+}
+
+@media (min-width: 600px) {
+  .profile-avatar {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+/* ─── Info beside avatar ─── */
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Stats row */
+.profile-stats {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+@media (min-width: 600px) {
+  .profile-stat {
+    flex-direction: row;
+    gap: 5px;
+  }
+}
+
+.profile-stat-value {
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.profile-stat-label {
+  font-size: .82rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Name + address ─── */
+.profile-bio {
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-business {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.profile-address {
+  font-size: .88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* ─── Separator ─── */
+.profile-sep {
+  height: 1px;
+  border: none;
+  background: var(--color-border);
+  margin: 0 0 3px;
+}
+
+/* ─── Video grid ─── */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+/* 2 columns on very small screens */
+@media (max-width: 360px) {
+  .profile-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.profile-grid-item {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--color-surface-alt);
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-grid-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  transition: background var(--transition-base);
+}
+.profile-grid-item:hover::after { background: rgba(0,0,0,.25); }
+
+.profile-grid-item::before {
+  content: '';
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 16px; height: 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center/contain no-repeat;
+  z-index: 2;
+  opacity: .9;
+}
+
+.profile-grid-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

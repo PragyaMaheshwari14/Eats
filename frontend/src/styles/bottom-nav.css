@@ -1,0 +1,164 @@
+@import './theme.css';
+
+/* ─── Mobile bottom nav ─── */
+.bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 56px;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+  z-index: 100;
+}
+
+/* iOS safe area — total height grows but content stays in 56px band */
+@supports(padding: max(0px)) {
+  .bottom-nav {
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+.bottom-nav__inner {
+  height: 56px; /* always exactly 56px, regardless of safe-area */
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Logout button — same look as nav items but danger colour */
+.bottom-nav__logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--color-danger) !important;
+  padding: 0;
+}
+
+.bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  gap: 2px;
+  transition: color var(--transition-base);
+  /* prevent text overflow on very small phones */
+  min-width: 0;
+  overflow: hidden;
+}
+.bottom-nav__item.is-active { color: var(--color-text); }
+.bottom-nav__item:hover { color: var(--color-text); }
+
+.bottom-nav__icon { line-height: 0; flex-shrink: 0; }
+.bottom-nav__label { font-size: 10px; font-weight: 500; white-space: nowrap; }
+
+/* Extra small phones (≤ 360px) — shrink icons a bit */
+@media (max-width: 360px) {
+  .bottom-nav__icon svg { width: 20px; height: 20px; }
+  .bottom-nav__label { font-size: 9px; }
+}
+
+/* ─── Tablet / Desktop ≥ 768px: convert to left sidebar ─── */
+@media (min-width: 768px) {
+  .bottom-nav {
+    /* Reset mobile styles */
+    top: 0; left: 0; right: auto; bottom: 0;
+    width: var(--sidebar-width);
+    height: 100dvh;
+    /* Reset safe-area height override */
+    padding-bottom: 0;
+    border-top: none;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-4) 0;
+  }
+
+  /* Also reset safe-area support override on sidebar */
+  @supports(padding: max(0px)) {
+    .bottom-nav {
+      height: 100dvh;
+      padding-bottom: 0;
+    }
+  }
+
+  .bottom-nav__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    /* Fill full sidebar height */
+    height: 100%;
+    max-width: none;
+    width: 100%;
+  }
+
+  /* Instagram icon at top */
+  .bottom-nav__inner::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 24px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f5f5f5'%3E%3Cpath d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z'/%3E%3C/svg%3E") center/contain no-repeat;
+    margin: var(--space-2) auto var(--space-5);
+    flex-shrink: 0;
+  }
+
+  .bottom-nav__item {
+    width: calc(100% - 16px);
+    flex-direction: row;
+    justify-content: center;
+    padding: 10px 0;
+    border-radius: var(--radius-sm);
+    margin: 2px auto;
+    gap: 0;
+    overflow: visible;
+  }
+  .bottom-nav__item:hover { background: var(--color-surface-alt); }
+  .bottom-nav__item.is-active { color: var(--color-text); }
+
+  .bottom-nav__label { display: none; }
+  .bottom-nav__icon { line-height: 0; }
+  .bottom-nav__icon svg { width: 26px; height: 26px; }
+}
+
+/* ─── Wide desktop ≥ 1264px: expand sidebar with labels ─── */
+@media (min-width: 1264px) {
+  .bottom-nav {
+    width: var(--sidebar-width-expanded);
+    align-items: flex-start;
+    padding: var(--space-4);
+  }
+
+  .bottom-nav__inner {
+    align-items: flex-start;
+  }
+
+  .bottom-nav__item {
+    justify-content: flex-start;
+    gap: var(--space-4);
+    padding: 12px var(--space-4);
+    width: 100%;
+    margin: 2px 0;
+  }
+
+  .bottom-nav__label {
+    display: block;
+    font-size: .95rem;
+    font-weight: 500;
+  }
+
+  .bottom-nav__item.is-active .bottom-nav__label { font-weight: 700; }
+
+  /* Logo icon also left-aligned */
+  .bottom-nav__inner::before {
+    margin: var(--space-2) var(--space-4) var(--space-5);
+    width: 28px;
+    height: 28px;
+  }
+}

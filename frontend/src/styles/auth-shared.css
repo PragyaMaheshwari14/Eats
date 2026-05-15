@@ -1,0 +1,207 @@
+@import './theme.css';
+
+/*
+  CENTERING STRATEGY:
+  - .auth-page-wrapper fills at least the full viewport height
+  - flexbox centers content when there's room
+  - When content (e.g. Partner Register) is taller than the viewport,
+    min-height lets the wrapper grow and body scroll kicks in naturally
+  - No overflow:hidden anywhere — body scrolls freely
+*/
+.auth-page-wrapper {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-bg);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Inner column — constrains card width and stacks card + bottom boxes */
+.auth-page-wrapper > div {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Card ── */
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  box-sizing: border-box;
+  /* FoodPartnerRegister uses max-width:420px inline — allow it */
+  align-self: stretch;
+}
+
+/* Logo area */
+.auth-card header {
+  text-align: center;
+  padding-bottom: var(--space-2);
+}
+
+.auth-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: var(--space-2);
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-subtitle {
+  font-size: .85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+form.auth-form { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+
+.field-group label {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.field-group input {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  padding: 11px 14px;
+  font: inherit;
+  font-size: .92rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+  color: var(--color-text);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.field-group input::placeholder { color: var(--color-text-secondary); }
+
+.field-group input:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* Two-column layout — always collapses on mobile */
+.two-col { display: flex; gap: var(--space-3); }
+.two-col .field-group { flex: 1 1 0; min-width: 0; }
+
+button.auth-submit,
+a.auth-submit {
+  margin-top: var(--space-1);
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  padding: 11px 16px;
+  font: inherit;
+  font-size: .92rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  letter-spacing: .3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: opacity var(--transition-base), transform var(--transition-base);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button.auth-submit:hover,
+a.auth-submit:hover { opacity: .88; }
+button.auth-submit:active,
+a.auth-submit:active { transform: scale(.985); }
+
+.auth-alt-action {
+  text-align: center;
+  font-size: .85rem;
+  color: var(--color-text-secondary);
+}
+.auth-alt-action a { font-weight: 700; color: var(--color-accent); }
+
+.auth-box-bottom {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  text-align: center;
+  font-size: .85rem;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+}
+.auth-box-bottom a { font-weight: 700; color: var(--color-accent); }
+
+.small-note { font-size: .7rem; color: var(--color-text-secondary); line-height: 1.4; margin-top: 2px; }
+
+/* ─── Small phones ≤ 480px ─── */
+@media (max-width: 480px) {
+  .auth-page-wrapper {
+    padding: var(--space-6) var(--space-4);
+    justify-content: flex-start; /* top-align so tall forms don't get clipped */
+  }
+  .auth-card { padding: var(--space-6) var(--space-5) var(--space-5); }
+  .two-col { flex-direction: column; }
+  .auth-box-bottom { padding: var(--space-3) var(--space-4); }
+}
+
+/* ─── Very small phones ≤ 360px ─── */
+@media (max-width: 360px) {
+  .auth-page-wrapper { padding: var(--space-4) var(--space-3); }
+  .auth-card { padding: var(--space-5) var(--space-4); }
+  .auth-title { font-size: 1.35rem; }
+  .field-group input { font-size: .85rem; padding: 9px 10px; }
+  button.auth-submit,
+  a.auth-submit { font-size: .85rem; padding: 10px 12px; }
+}
+
+/* ─── Desktop ≥ 768px: keep content vertically centered ─── */
+@media (min-width: 768px) {
+  .auth-page-wrapper {
+    /* On desktop the form is always shorter than the viewport,
+       so centering is safe and looks polished */
+    justify-content: center;
+    padding: var(--space-8) var(--space-6);
+  }
+}
