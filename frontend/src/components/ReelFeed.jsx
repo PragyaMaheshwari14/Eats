@@ -17,8 +17,35 @@ const DownIcon     = () => <svg width="20" height="20" viewBox="0 0 24 24" fill=
 const CloseIcon    = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
 const SendIcon     = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
 
+/* ─────────────────────────────────────────
+   useVisualViewportHeight
+   Returns the current visual viewport height in px.
+   On Android/Samsung, this shrinks when the keyboard opens.
+   Falls back to window.innerHeight on browsers without visualViewport.
+───────────────────────────────────────── */
+function useVisualViewportHeight() {
+  const [vpHeight, setVpHeight] = useState(
+    () => window.visualViewport?.height ?? window.innerHeight
+  )
+
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const update = () => setVpHeight(vv.height)
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
+
+  return vpHeight
+}
+
 /* ───────────── Comment Panel ───────────── */
-const CommentPanel = ({ item, onClose, isDesktop }) => {
+const CommentPanel = ({ item, onClose, isDesktop, vpHeight }) => {
   const [comments, setComments] = useState([])
   const [text,     setText]     = useState('')
   const [loading,  setLoading]  = useState(true)
@@ -32,6 +59,7 @@ const CommentPanel = ({ item, onClose, isDesktop }) => {
 
   useEffect(() => {
     if (!item) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     axios.get(`${import.meta.env.VITE_API_URL}/api/food/comment/${item._id}`, authHeaders())
       .then(r => setComments(r.data.comments ?? []))
@@ -43,7 +71,7 @@ const CommentPanel = ({ item, onClose, isDesktop }) => {
     if (!loading && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
   }, [loading, comments.length])
 
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 100) }, [])
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 150) }, [])
 
   const handlePost = async () => {
     if (!text.trim() || posting) return
@@ -61,10 +89,13 @@ const CommentPanel = ({ item, onClose, isDesktop }) => {
     finally { setPosting(false) }
   }
 
-  const handleKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePost() } }
+  const handleKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handlePost() }
+  }
 
   const formatTime = (iso) => {
     if (!iso) return ''
+    // eslint-disable-next-line react-hooks/purity
     const diff = (Date.now() - new Date(iso)) / 1000
     if (diff < 60)    return 'just now'
     if (diff < 3600)  return `${Math.floor(diff / 60)}m`
@@ -72,16 +103,32 @@ const CommentPanel = ({ item, onClose, isDesktop }) => {
     return `${Math.floor(diff / 86400)}d`
   }
 
-  const initial      = (name) => (name ?? 'U')[0].toUpperCase()
-  const avatarColor  = (name) => {
+  const initial     = (name) => (name ?? 'U')[0].toUpperCase()
+  const avatarColor = (name) => {
     const colors = ['#f09433','#e6683c','#dc2743','#cc2366','#bc1888','#0095f6','#1dbf73']
     let hash = 0
     for (const c of (name ?? 'U')) hash = c.charCodeAt(0) + ((hash << 5) - hash)
     return colors[Math.abs(hash) % colors.length]
   }
 
+  /* ── Mobile sheet height: clamp to visual viewport so keyboard never covers it ── */
+  // Bottom nav height (56px) + safe area
+  const BOTTOM_NAV = 56
+  // Max sheet = 70% of visual viewport; min = enough for header + input (~120px)
+  const sheetMaxPx = !isDesktop
+    ? Math.max(120, vpHeight - BOTTOM_NAV - 16)   // 16px gap from top of sheet to video
+    : undefined
+
+  const sheetStyle = !isDesktop && sheetMaxPx != null
+    ? { maxHeight: `${sheetMaxPx}px`, height: `${Math.min(sheetMaxPx, vpHeight * 0.70)}px` }
+    : {}
+
   return (
-    <div className={`comment-panel ${isDesktop ? 'comment-panel--desktop' : 'comment-panel--sheet'}`}>
+    <div
+      className={`comment-panel ${isDesktop ? 'comment-panel--desktop' : 'comment-panel--sheet'}`}
+      style={sheetStyle}
+    >
+      {/* Header */}
       <div className="comment-panel__header">
         {!isDesktop && <div className="comment-panel__handle" />}
         <span className="comment-panel__title">Comments</span>
@@ -90,9 +137,12 @@ const CommentPanel = ({ item, onClose, isDesktop }) => {
         </button>
       </div>
 
+      {/* List */}
       <div className="comment-panel__list" ref={listRef}>
         {loading && <div className="comment-panel__empty">Loading…</div>}
-        {!loading && comments.length === 0 && <div className="comment-panel__empty">No comments yet. Be the first!</div>}
+        {!loading && comments.length === 0 && (
+          <div className="comment-panel__empty">No comments yet. Be the first!</div>
+        )}
         {!loading && comments.map((c, i) => (
           <div key={c._id ?? i} className="comment-item">
             <div className="comment-item__avatar" style={{ background: avatarColor(c.user?.fullName) }}>
@@ -109,6 +159,7 @@ const CommentPanel = ({ item, onClose, isDesktop }) => {
         ))}
       </div>
 
+      {/* Input */}
       <div className="comment-panel__input-row">
         <input
           ref={inputRef}
@@ -138,8 +189,8 @@ const ReelFeed = ({
   onLike,
   onSave,
   emptyMessage = 'No videos yet.',
-  initialLikedIds = new Set(),   // ← pre-populated from backend on login
-  initialSavedIds = new Set(),   // ← pre-populated from backend on login
+  initialLikedIds = new Set(),
+  initialSavedIds = new Set(),
 }) => {
   const videoRefs      = useRef(new Map())
   const feedRef        = useRef(null)
@@ -162,12 +213,16 @@ const ReelFeed = ({
   const [commentItem, setCommentItem] = useState(null)
   const [isDesktop,   setIsDesktop]   = useState(window.innerWidth >= 1024)
 
-  // Sync liked/saved state when initial sets arrive from backend
+  // Live visual-viewport height — shrinks when keyboard opens on Android
+  const vpHeight = useVisualViewportHeight()
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialLikedIds.size > 0) setLikedIds(new Set(initialLikedIds))
   }, [initialLikedIds])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialSavedIds.size > 0) setSavedIds(new Set(initialSavedIds))
   }, [initialSavedIds])
 
@@ -210,7 +265,7 @@ const ReelFeed = ({
     return () => feed.removeEventListener('wheel', onWheel)
   }, [items, scrollNext, scrollPrev])
 
-  /* ── Keyboard ── */
+  /* ── Keyboard nav ── */
   useEffect(() => {
     const onKey = (e) => {
       if (window.innerWidth < 1024) return
@@ -237,7 +292,7 @@ const ReelFeed = ({
     return () => observer.disconnect()
   }, [items])
 
-  /* ── Track scroll index ── */
+  /* ── Track active index ── */
   useEffect(() => {
     const feed = feedRef.current
     if (!feed) return
@@ -280,14 +335,13 @@ const ReelFeed = ({
     setCommentItem(prev => prev?._id === item._id ? null : item)
   }, [])
 
-  /* ── Desktop handlers ── */
   const handleDesktopLike    = () => { const i = itemsRef.current[currentIdxRef.current]; if (i) handleLike(i) }
   const handleDesktopSave    = () => { const i = itemsRef.current[currentIdxRef.current]; if (i) handleSave(i) }
   const handleDesktopComment = () => { const i = itemsRef.current[currentIdxRef.current]; if (i) handleComment(i) }
 
-  const activeItem             = items[activeIdx] ?? null
-  const commentOpen            = !!commentItem
-  const desktopCommentActive   = isDesktop && commentOpen && commentItem?._id === activeItem?._id
+  const activeItem           = items[activeIdx] ?? null
+  const commentOpen          = !!commentItem
+  const desktopCommentActive = isDesktop && commentOpen && commentItem?._id === activeItem?._id
 
   return (
     <div className={`reels-page${desktopCommentActive ? ' reels-page--comments-open' : ''}`}>
@@ -315,7 +369,6 @@ const ReelFeed = ({
 
                 {/* Mobile actions */}
                 <div className="reel-actions">
-                  {/* Like */}
                   <div className="reel-action-group">
                     <button
                       className={`reel-action${heartPop ? ' reel-action--pop' : ''}`}
@@ -328,7 +381,6 @@ const ReelFeed = ({
                     <span className="reel-action__count">{item.likeCount ?? 0}</span>
                   </div>
 
-                  {/* Comment */}
                   <div className="reel-action-group">
                     <button
                       className="reel-action"
@@ -341,7 +393,6 @@ const ReelFeed = ({
                     <span className="reel-action__count">{item.commentCount ?? 0}</span>
                   </div>
 
-                  {/* Save */}
                   <div className="reel-action-group">
                     <button
                       className={`reel-action${savePop ? ' reel-action--pop' : ''}`}
@@ -420,14 +471,24 @@ const ReelFeed = ({
 
       {/* ══ Desktop comment panel ══ */}
       {isDesktop && commentOpen && (
-        <CommentPanel item={commentItem} onClose={() => setCommentItem(null)} isDesktop={true} />
+        <CommentPanel
+          item={commentItem}
+          onClose={() => setCommentItem(null)}
+          isDesktop={true}
+          vpHeight={vpHeight}
+        />
       )}
 
       {/* ══ Mobile comment bottom sheet ══ */}
       {!isDesktop && commentOpen && (
         <>
           <div className="comment-backdrop" onClick={() => setCommentItem(null)} />
-          <CommentPanel item={commentItem} onClose={() => setCommentItem(null)} isDesktop={false} />
+          <CommentPanel
+            item={commentItem}
+            onClose={() => setCommentItem(null)}
+            isDesktop={false}
+            vpHeight={vpHeight}
+          />
         </>
       )}
     </div>

@@ -63,7 +63,7 @@
   );
 }
 
-/* bottom caption */
+/* caption */
 .reel-content {
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -93,7 +93,7 @@
 .reel-btn:hover { background: rgba(255,255,255,.28); color: #fff; }
 
 /* ══════════════════════════════════════════
-   MOBILE ACTIONS
+   MOBILE ACTION BUTTONS
 ══════════════════════════════════════════ */
 .reel-actions {
   position: absolute;
@@ -109,46 +109,42 @@
   width: 48px; height: 48px; border-radius: 50%;
   display: grid; place-items: center;
   background: transparent; border: none; cursor: pointer; padding: 0;
-  /* ── Kill browser focus ring on tap — the icon colour change IS the feedback ── */
   outline: none;
   -webkit-tap-highlight-color: transparent;
   transition: transform 150ms cubic-bezier(.4,0,.2,1),
               color     150ms cubic-bezier(.4,0,.2,1);
 }
-/* Only show focus ring for keyboard users (not touch) */
-.reel-action:focus-visible {
-  outline: 2px solid rgba(255,255,255,.5);
-  outline-offset: 2px;
-}
+.reel-action:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 .reel-action:hover  { transform: scale(1.15); }
 .reel-action:active { transform: scale(.92); }
 
-/* ── Heart / bookmark pop animation ── */
 @keyframes reel-pop {
   0%   { transform: scale(1); }
   30%  { transform: scale(1.45); }
   60%  { transform: scale(0.88); }
   100% { transform: scale(1); }
 }
-.reel-action--pop {
-  animation: reel-pop 0.4s cubic-bezier(.36,.07,.19,.97) forwards;
-}
+.reel-action--pop { animation: reel-pop 0.4s cubic-bezier(.36,.07,.19,.97) forwards; }
 
 .reel-action__count {
   color: #fff; font-size: .7rem; font-weight: 700;
   text-shadow: 0 1px 2px rgba(0,0,0,.6); text-align: center; line-height: 1;
 }
 
-/* desktop-only hidden on mobile */
 .reel-actions-desktop { display: none; }
 .reel-nav-arrows      { display: none; }
 
 /* ══════════════════════════════════════════
    MOBILE COMMENT BOTTOM SHEET
+   Key fix: positioned above bottom nav (bottom: 56px + safe area),
+   height is controlled via inline style from JS (shrinks with keyboard).
+   overflow: hidden on the sheet itself prevents content from spilling.
 ══════════════════════════════════════════ */
 .comment-backdrop {
   position: fixed;
   inset: 0;
+  /* Stop just above the bottom nav */
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   background: rgba(0,0,0,.55);
   z-index: 200;
   animation: fadeIn 200ms ease;
@@ -157,7 +153,9 @@
 
 .comment-panel--sheet {
   position: fixed;
-  left: 0; right: 0;
+  left: 0;
+  right: 0;
+  /* Sits exactly on top of the bottom nav */
   bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   z-index: 201;
   background: var(--color-surface);
@@ -165,8 +163,12 @@
   border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  height: 70dvh;
-  animation: slideUp 280ms cubic-bezier(.32,0,.67,0);
+  /* Default height — overridden by inline style from JS when keyboard opens */
+  height: 60vh;
+  max-height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px) - 48px);
+  /* CRITICAL: prevent any overflow — the list inside scrolls independently */
+  overflow: hidden;
+  animation: slideUp 260ms cubic-bezier(.25,.46,.45,.94);
 }
 @keyframes slideUp {
   from { transform: translateY(100%) }
@@ -177,14 +179,16 @@
    TABLET 768px–1023px
 ══════════════════════════════════════════ */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .reels-page {
-    margin-left: var(--sidebar-width);
-    justify-content: center;
-    align-items: center;
-  }
+  .reels-page { margin-left: var(--sidebar-width); justify-content: center; align-items: center; }
   .reel-content { padding: 16px 68px 80px 16px; }
   .reel-actions { bottom: 80px; }
-  .comment-panel--sheet { bottom: 0; height: 65dvh; }
+
+  .comment-panel--sheet {
+    bottom: 0;
+    height: 60vh;
+    max-height: 80vh;
+  }
+  .comment-backdrop { bottom: 0; }
 }
 
 /* ══════════════════════════════════════════
@@ -198,18 +202,14 @@
     align-items: center;
   }
 
-  .reels-feed {
-    width: 340px; height: 88dvh;
-    border-radius: 14px; overflow: hidden; flex-shrink: 0;
-  }
-  .reel { height: 88dvh; border-radius: 14px; overflow: hidden; }
+  .reels-feed { width: 340px; height: 88dvh; border-radius: 14px; overflow: hidden; flex-shrink: 0; }
+  .reel       { height: 88dvh; border-radius: 14px; overflow: hidden; }
 
   .reel-actions { display: none !important; }
   .reel-content { padding: 16px 16px 24px 16px; }
 
   .reel-actions-desktop {
-    display: flex; flex-direction: column;
-    align-items: center; gap: 24px; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 24px; flex-shrink: 0;
   }
 
   .reel-nav-arrows { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
@@ -218,28 +218,28 @@
     width: 44px; height: 44px; border-radius: 50%;
     background: var(--color-surface); border: 1px solid var(--color-border);
     color: var(--color-text); display: grid; place-items: center;
-    cursor: pointer; box-shadow: var(--shadow-md); outline: none;
-    -webkit-tap-highlight-color: transparent;
+    cursor: pointer; box-shadow: var(--shadow-md);
+    outline: none; -webkit-tap-highlight-color: transparent;
     transition: background var(--transition-base), transform var(--transition-base);
   }
   .reel-nav-btn:hover  { background: var(--color-surface-alt); transform: scale(1.06); }
   .reel-nav-btn:active { transform: scale(.94); }
   .reel-nav-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-  /* Desktop comment panel */
   .comment-panel--desktop {
     width: 340px; height: 88dvh; flex-shrink: 0;
     border-radius: 14px; border: 1px solid var(--color-border);
     background: var(--color-surface);
     display: flex; flex-direction: column;
-    animation: fadeIn 180ms ease; overflow: hidden;
+    overflow: hidden;
+    animation: fadeIn 180ms ease;
   }
 }
 
 @media (min-width: 1264px) {
-  .reels-page  { margin-left: var(--sidebar-width-expanded); }
-  .reels-feed  { width: 390px; }
-  .reel        { height: 88dvh; }
+  .reels-page             { margin-left: var(--sidebar-width-expanded); }
+  .reels-feed             { width: 390px; }
+  .reel                   { height: 88dvh; }
   .comment-panel--desktop { width: 380px; height: 88dvh; }
 }
 
@@ -248,10 +248,8 @@
 ══════════════════════════════════════════ */
 .reel-action-desktop {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
-  cursor: pointer; background: none; border: none;
-  color: var(--color-text); padding: 0;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
+  cursor: pointer; background: none; border: none; color: var(--color-text); padding: 0;
+  outline: none; -webkit-tap-highlight-color: transparent;
   transition: transform 150ms cubic-bezier(.4,0,.2,1),
               color     150ms cubic-bezier(.4,0,.2,1),
               opacity   150ms cubic-bezier(.4,0,.2,1);
@@ -264,8 +262,7 @@
 .reel-action-desktop--pop    { animation: reel-pop 0.4s cubic-bezier(.36,.07,.19,.97) forwards; }
 
 .reel-action-desktop__count {
-  font-size: .75rem; font-weight: 600;
-  color: var(--color-text); text-align: center;
+  font-size: .75rem; font-weight: 600; color: var(--color-text); text-align: center;
 }
 
 .empty-state {
@@ -274,17 +271,22 @@
 }
 
 /* ══════════════════════════════════════════
-   COMMENT PANEL — shared
+   COMMENT PANEL — shared styles
 ══════════════════════════════════════════ */
 .comment-panel__header {
   display: flex; align-items: center; justify-content: center;
-  padding: 12px 16px; border-bottom: 1px solid var(--color-border);
+  /* Extra top padding on mobile for the drag handle */
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--color-border);
   position: relative; flex-shrink: 0;
 }
+@media (min-width: 1024px) {
+  .comment-panel__header { padding: 14px 16px; }
+}
+
 .comment-panel__handle {
   position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-  width: 36px; height: 4px;
-  background: var(--color-border); border-radius: 99px;
+  width: 36px; height: 4px; background: var(--color-border); border-radius: 99px;
 }
 .comment-panel__title { font-size: .95rem; font-weight: 700; color: var(--color-text); }
 .comment-panel__close {
@@ -298,19 +300,29 @@
 .comment-panel__close:hover { background: var(--color-surface-alt); color: var(--color-text); }
 .comment-panel__close:focus-visible { outline: 2px solid var(--color-accent); }
 
+/* Scrollable list — takes all remaining space between header and input */
 .comment-panel__list {
-  flex: 1; overflow-y: auto; padding: 12px 16px;
-  display: flex; flex-direction: column; gap: 16px;
-  scrollbar-width: thin; scrollbar-color: var(--color-border) transparent;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* thin scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  /* ensure it can shrink when keyboard pushes up */
+  min-height: 0;
 }
 .comment-panel__list::-webkit-scrollbar { width: 4px; }
 .comment-panel__list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
 
 .comment-panel__empty {
-  color: var(--color-text-secondary); font-size: .88rem;
-  text-align: center; padding: 32px 0;
+  color: var(--color-text-secondary); font-size: .88rem; text-align: center; padding: 24px 0;
 }
 
+/* Comment rows */
 .comment-item { display: flex; gap: 10px; align-items: flex-start; }
 .comment-item__avatar {
   width: 34px; height: 34px; border-radius: 50%;
@@ -318,36 +330,43 @@
   font-size: .82rem; font-weight: 700; color: #fff;
   flex-shrink: 0; user-select: none;
 }
-.comment-item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.comment-item__meta { display: flex; align-items: baseline; gap: 6px; }
-.comment-item__name { font-size: .82rem; font-weight: 700; color: var(--color-text); }
-.comment-item__time { font-size: .72rem; color: var(--color-text-secondary); }
-.comment-item__text { font-size: .88rem; color: var(--color-text); line-height: 1.45; word-break: break-word; }
+.comment-item__body  { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.comment-item__meta  { display: flex; align-items: baseline; gap: 6px; }
+.comment-item__name  { font-size: .82rem; font-weight: 700; color: var(--color-text); }
+.comment-item__time  { font-size: .72rem; color: var(--color-text-secondary); }
+.comment-item__text  { font-size: .88rem; color: var(--color-text); line-height: 1.45; word-break: break-word; }
 
+/* Input row — pinned to the bottom of the sheet, never hidden behind keyboard */
 .comment-panel__input-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
   border-top: 1px solid var(--color-border);
-  background: var(--color-surface); flex-shrink: 0;
+  background: var(--color-surface);
+  flex-shrink: 0;
+  /* No extra safe-area padding here — sheet is already above bottom nav */
 }
-@media (min-width: 1024px) { .comment-panel__input-row { padding: 10px 14px; } }
 
 .comment-panel__input {
-  flex: 1; background: var(--color-surface-alt);
-  border: 1px solid var(--color-border); border-radius: 999px;
-  padding: 9px 16px; font: inherit; font-size: .88rem;
-  color: var(--color-text); outline: none; min-width: 0;
+  flex: 1; min-width: 0;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font: inherit; font-size: .88rem; color: var(--color-text);
+  outline: none;
   transition: border-color var(--transition-base);
 }
 .comment-panel__input::placeholder { color: var(--color-text-secondary); }
 .comment-panel__input:focus { border-color: var(--color-accent); }
 
 .comment-panel__send {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: var(--color-accent); border: none;
-  display: grid; place-items: center; cursor: pointer;
-  color: #fff; flex-shrink: 0; outline: none;
-  -webkit-tap-highlight-color: transparent;
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 50%; background: var(--color-accent);
+  border: none; display: grid; place-items: center;
+  cursor: pointer; color: #fff;
+  outline: none; -webkit-tap-highlight-color: transparent;
   transition: opacity var(--transition-base), transform var(--transition-base);
 }
 .comment-panel__send:hover   { opacity: .88; }
