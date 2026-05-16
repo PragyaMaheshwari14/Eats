@@ -4,7 +4,6 @@
    BASE — shared mobile + desktop
 ══════════════════════════════════════════ */
 .reels-page {
-  /* Reels manages its own viewport lock — body no longer needs overflow:hidden */
   position: fixed;
   inset: 0;
   height: 100dvh;
@@ -65,7 +64,7 @@
   );
 }
 
-/* bottom caption — pushed above 56px mobile nav */
+/* bottom caption */
 .reel-content {
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -95,8 +94,7 @@
 .reel-btn:hover { background: rgba(255,255,255,.28); color: #fff; }
 
 /* ══════════════════════════════════════════
-   MOBILE — actions overlaid inside video
-   Pushed above 56px bottom nav
+   MOBILE ACTIONS
 ══════════════════════════════════════════ */
 .reel-actions {
   position: absolute;
@@ -107,14 +105,29 @@
   pointer-events: auto; z-index: 2;
 }
 .reel-action-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
 .reel-action {
   width: 48px; height: 48px; border-radius: 50%;
   display: grid; place-items: center;
-  background: transparent; color: #fff; border: none; cursor: pointer; padding: 0;
-  transition: transform var(--transition-base);
+  background: transparent; border: none; cursor: pointer; padding: 0;
+  /* smooth color + scale transitions */
+  transition: transform 150ms cubic-bezier(.4,0,.2,1),
+              color     150ms cubic-bezier(.4,0,.2,1);
 }
 .reel-action:hover  { transform: scale(1.15); }
 .reel-action:active { transform: scale(.92); }
+
+/* ── Heart / bookmark pop-on-like animation ── */
+@keyframes reel-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.45); }
+  60%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+.reel-action--pop {
+  animation: reel-pop 0.4s cubic-bezier(.36,.07,.19,.97) forwards;
+}
+
 .reel-action__count {
   color: #fff; font-size: .7rem; font-weight: 700;
   text-shadow: 0 1px 2px rgba(0,0,0,.6); text-align: center; line-height: 1;
@@ -126,9 +139,6 @@
 
 /* ══════════════════════════════════════════
    TABLET 768px–1023px
-   Sidebar (72px) is present as left sidebar.
-   Offset the reel page. No action/arrow cols yet.
-   Bottom nav is now a sidebar, so remove bottom offset.
 ══════════════════════════════════════════ */
 @media (min-width: 768px) and (max-width: 1023px) {
   .reels-page {
@@ -136,14 +146,8 @@
     justify-content: center;
     align-items: center;
   }
-
-  /* sidebar replaces bottom nav — restore normal caption position */
-  .reel-content {
-    padding: 16px 68px 80px 16px;
-  }
-  .reel-actions {
-    bottom: 80px;
-  }
+  .reel-content { padding: 16px 68px 80px 16px; }
+  .reel-actions { bottom: 80px; }
 }
 
 /* ══════════════════════════════════════════
@@ -207,14 +211,28 @@
   .reel        { height: 88dvh; }
 }
 
+/* ── Desktop action buttons ── */
 .reel-action-desktop {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   cursor: pointer; background: none; border: none;
   color: var(--color-text); padding: 0;
-  transition: transform var(--transition-base), opacity var(--transition-base);
+  transition: transform 150ms cubic-bezier(.4,0,.2,1),
+              color     150ms cubic-bezier(.4,0,.2,1),
+              opacity   150ms cubic-bezier(.4,0,.2,1);
 }
 .reel-action-desktop:hover  { transform: scale(1.1); opacity: .8; }
 .reel-action-desktop:active { transform: scale(.93); }
+
+/* Liked state — turn icon red */
+.reel-action-desktop--liked {
+  color: #ed4956;
+}
+
+/* Pop animation on desktop too */
+.reel-action-desktop--pop {
+  animation: reel-pop 0.4s cubic-bezier(.36,.07,.19,.97) forwards;
+}
+
 .reel-action-desktop__count {
   font-size: .75rem; font-weight: 600;
   color: var(--color-text); text-align: center;
