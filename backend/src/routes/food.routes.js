@@ -4,47 +4,50 @@ const authMiddleware = require('../middlewares/auth.middleware');
 const router = express.Router();
 const multer = require('multer');
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-})
+const upload = multer({ storage: multer.memoryStorage() });
 
- /* POST /api/food/ [protected] */
-router.post('/', 
-    authMiddleware.authFoodPartnerMiddleware,
-    upload.single("video"),
-    foodController.createFood
+/* POST /api/food/ [food partner protected] */
+router.post('/',
+  authMiddleware.authFoodPartnerMiddleware,
+  upload.single("video"),
+  foodController.createFood
 );
 
-/* GET /api/food/ [protected]*/
+/* GET /api/food/ [user protected] */
 router.get("/",
-    authMiddleware.authUserMiddleware,
-    foodController.getFoodItems
-)
+  authMiddleware.authUserMiddleware,
+  foodController.getFoodItems
+);
+
+/* GET /api/food/like — returns all food IDs the user has liked [user protected] */
+router.get('/like',
+  authMiddleware.authUserMiddleware,
+  foodController.getLikedFoods
+);
 
 router.post('/like',
-    authMiddleware.authUserMiddleware, 
-    foodController.likeFood
-)
+  authMiddleware.authUserMiddleware,
+  foodController.likeFood
+);
 
-router.post('/save', 
-    authMiddleware.authUserMiddleware,
-    foodController.saveFood
-)
+router.post('/save',
+  authMiddleware.authUserMiddleware,
+  foodController.saveFood
+);
 
-router.get('/save', 
-    authMiddleware.authUserMiddleware,
-    foodController.getSaveFood
-)
+router.get('/save',
+  authMiddleware.authUserMiddleware,
+  foodController.getSaveFood
+);
 
 router.post('/comment',
-    authMiddleware.authUserMiddleware,
-    foodController.addComment
-)
+  authMiddleware.authUserMiddleware,
+  foodController.addComment
+);
 
 router.get('/comment/:foodId',
-    authMiddleware.authUserMiddleware,
-    foodController.getComments
-)
+  authMiddleware.authUserMiddleware,
+  foodController.getComments
+);
 
-
-module.exports = router
+module.exports = router;

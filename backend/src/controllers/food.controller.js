@@ -6,181 +6,152 @@ const commentModel = require("../models/comment.model");
 const { v4: uuid } = require("uuid");
 
 async function createFood(req, res) {
-  const fileUploadResult = await storageService.uploadFile(
-    req.file.buffer,
-    uuid(),
-  );
+  try {
+    const fileUploadResult = await storageService.uploadFile(
+      req.file.buffer,
+      uuid(),
+    );
 
-  const foodItem = await foodModel.create({
-    name: req.body.name,
-    description: req.body.description,
-    video: fileUploadResult.url,
-    foodPartner: req.foodPartner._id,
-  });
+    const foodItem = await foodModel.create({
+      name: req.body.name,
+      description: req.body.description,
+      video: fileUploadResult.url,
+      foodPartner: req.foodPartner._id,
+    });
 
-  res.status(201).json({
-    message: "Food item created successfully",
-    food: foodItem,
-  });
+    res.status(201).json({
+      message: "Food item created successfully",
+      food: foodItem,
+    });
+  } catch (error) {
+    console.error("createFood error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 }
 
 async function getFoodItems(req, res) {
-  const foodItems = await foodModel.find({});
-  res.status(200).json({
-    message: "Food items fetched successfully",
-    foodItems,
-  });
+  try {
+    const foodItems = await foodModel.find({});
+    res.status(200).json({
+      message: "Food items fetched successfully",
+      foodItems,
+    });
+  } catch (error) {
+    console.error("getFoodItems error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 }
 
 async function likeFood(req, res) {
-  const { foodId } = req.body;
-  const user = req.user;
+  try {
+    const { foodId } = req.body;
+    const user = req.user;
 
-  const isAlreadyLiked = await likeModel.findOne({
-    user: user._id,
-    food: foodId,
-  });
-
-  if (isAlreadyLiked) {
-    await likeModel.deleteOne({
+    const isAlreadyLiked = await likeModel.findOne({
       user: user._id,
       food: foodId,
     });
 
-    await foodModel.findByIdAndUpdate(foodId, {
-      $inc: { likeCount: -1 },
-    });
+    if (isAlreadyLiked) {
+      await likeModel.deleteOne({ user: user._id, food: foodId });
+      await foodModel.findByIdAndUpdate(foodId, { $inc: { likeCount: -1 } });
+      return res.status(200).json({ message: "Food unliked successfully" });
+    }
 
-    return res.status(200).json({
-      message: "Food unliked successfully",
-    });
+    const like = await likeModel.create({ user: user._id, food: foodId });
+    await foodModel.findByIdAndUpdate(foodId, { $inc: { likeCount: 1 } });
+
+    res.status(201).json({ message: "Food liked successfully", like });
+  } catch (error) {
+    console.error("likeFood error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
-
-  const like = await likeModel.create({
-    user: user._id,
-    food: foodId,
-  });
-
-  await foodModel.findByIdAndUpdate(foodId, {
-    $inc: { likeCount: 1 },
-  });
-
-  res.status(201).json({
-    message: "Food liked successfully",
-    like,
-  });
 }
 
 async function saveFood(req, res) {
-  const { foodId } = req.body;
-  const user = req.user;
+  try {
+    const { foodId } = req.body;
+    const user = req.user;
 
-  const isAlreadySaved = await saveModel.findOne({
-    user: user._id,
-    food: foodId,
-  });
-
-  if (isAlreadySaved) {
-    await saveModel.deleteOne({
+    const isAlreadySaved = await saveModel.findOne({
       user: user._id,
       food: foodId,
     });
 
-    await foodModel.findByIdAndUpdate(foodId, {
-      $inc: { savesCount: -1 },
-    });
+    if (isAlreadySaved) {
+      await saveModel.deleteOne({ user: user._id, food: foodId });
+      await foodModel.findByIdAndUpdate(foodId, { $inc: { savesCount: -1 } });
+      return res.status(200).json({ message: "Food unsaved successfully" });
+    }
 
-    return res.status(200).json({
-      message: "Food unsaved successfully",
-    });
+    const save = await saveModel.create({ user: user._id, food: foodId });
+    await foodModel.findByIdAndUpdate(foodId, { $inc: { savesCount: 1 } });
+
+    res.status(201).json({ message: "Food saved successfully", save });
+  } catch (error) {
+    console.error("saveFood error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
-
-  const save = await saveModel.create({
-    user: user._id,
-    food: foodId,
-  });
-
-  await foodModel.findByIdAndUpdate(foodId, {
-    $inc: { savesCount: 1 },
-  });
-
-  res.status(201).json({
-    message: "Food saved successfully",
-    save,
-  });
 }
 
 async function getSaveFood(req, res) {
-  const user = req.user;
+  try {
+    const user = req.user;
+    const savedFoods = await saveModel.find({ user: user._id }).populate("food");
 
-  const savedFoods = await saveModel.find({ user: user._id }).populate("food");
-
-  if (!savedFoods || savedFoods.length === 0) {
-    return res.status(404).json({ message: "No saved foods found" });
+    // Return empty array instead of 404 — easier to handle on frontend
+    res.status(200).json({
+      message: "Saved foods retrieved successfully",
+      savedFoods: savedFoods ?? [],
+    });
+  } catch (error) {
+    console.error("getSaveFood error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
+}
 
-  res.status(200).json({
-    message: "Saved foods retrieved successfully",
-    savedFoods,
-  });
+// NEW: returns all food IDs the current user has liked
+async function getLikedFoods(req, res) {
+  try {
+    const user = req.user;
+    const likes = await likeModel.find({ user: user._id }).select("food");
+    const likedFoodIds = likes.map((l) => l.food.toString());
+    res.status(200).json({ likedFoodIds });
+  } catch (error) {
+    console.error("getLikedFoods error:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 }
 
 async function addComment(req, res) {
   try {
     const { foodId, text } = req.body;
-
     const user = req.user;
 
     if (!text || text.trim() === "") {
-      return res.status(400).json({
-        message: "Comment is required",
-      });
+      return res.status(400).json({ message: "Comment is required" });
     }
 
-    const comment = await commentModel.create({
-      user: user._id,
-      food: foodId,
-      text,
-    });
+    const comment = await commentModel.create({ user: user._id, food: foodId, text });
+    await foodModel.findByIdAndUpdate(foodId, { $inc: { commentCount: 1 } });
 
-    await foodModel.findByIdAndUpdate(foodId, {
-      $inc: {
-        commentCount: 1,
-      },
-    });
-
-    res.status(201).json({
-      message: "Comment added successfully",
-      comment,
-    });
+    res.status(201).json({ message: "Comment added successfully", comment });
   } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    console.error("addComment error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
 async function getComments(req, res) {
   try {
     const { foodId } = req.params;
-
     const comments = await commentModel
-      .find({
-        food: foodId,
-      })
+      .find({ food: foodId })
       .populate("user", "fullName");
-
-    res.status(200).json({
-      comments,
-    });
+    res.status(200).json({ comments });
   } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    console.error("getComments error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -190,6 +161,7 @@ module.exports = {
   likeFood,
   saveFood,
   getSaveFood,
+  getLikedFoods,
   addComment,
   getComments,
 };

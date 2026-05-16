@@ -6,17 +6,35 @@ import ReelFeed from '../../components/ReelFeed'
 
 const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-});
+})
 
 const Home = () => {
-  const [videos, setVideos] = useState([])
+  const [videos,          setVideos]          = useState([])
+  const [initialLikedIds, setInitialLikedIds] = useState(new Set())
+  const [initialSavedIds, setInitialSavedIds] = useState(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_API_URL}/api/food`, authHeaders())
-      .then(response => { setVideos(response.data.foodItems) })
+    const headers = authHeaders()
+
+    // Fetch videos, liked IDs, and saved IDs in parallel
+    Promise.all([
+      axios.get(`${import.meta.env.VITE_API_URL}/api/food`,      headers),
+      axios.get(`${import.meta.env.VITE_API_URL}/api/food/like`, headers),
+      axios.get(`${import.meta.env.VITE_API_URL}/api/food/save`, headers),
+    ])
+      .then(([videosRes, likedRes, savedRes]) => {
+        setVideos(videosRes.data.foodItems ?? [])
+
+        // Pre-populate liked set
+        const likedIds = likedRes.data.likedFoodIds ?? []
+        setInitialLikedIds(new Set(likedIds))
+
+        // Pre-populate saved set from savedFoods array
+        const savedFoods = savedRes.data.savedFoods ?? []
+        setInitialSavedIds(new Set(savedFoods.map(s => s.food?._id ?? s.food)))
+      })
       .catch((err) => {
-        // If 401, token is missing or belongs to a food partner — send to login
         if (err.response?.status === 401) {
           localStorage.removeItem('token')
           localStorage.removeItem('role')
@@ -35,7 +53,7 @@ const Home = () => {
       if (response.data.like) {
         setVideos(prev => prev.map(v => v._id === item._id ? { ...v, likeCount: v.likeCount + 1 } : v))
       } else {
-        setVideos(prev => prev.map(v => v._id === item._id ? { ...v, likeCount: v.likeCount - 1 } : v))
+        setVideos(prev => prev.map(v => v._id === item._id ? { ...v, likeCount: Math.max(0, v.likeCount - 1) } : v))
       }
     } catch (error) {
       console.log(error)
@@ -49,15 +67,11 @@ const Home = () => {
         { foodId: item._id },
         authHeaders()
       )
-      setVideos((prev) =>
-        prev.map((video) => {
-          if (video._id !== item._id) return video
-          if (response.data.save) {
-            return { ...video, savesCount: (video.savesCount || 0) + 1, isSaved: true }
-          }
-          return { ...video, savesCount: Math.max(0, (video.savesCount || 1) - 1), isSaved: false }
-        })
-      )
+      setVideos(prev => prev.map(video => {
+        if (video._id !== item._id) return video
+        if (response.data.save) return { ...video, savesCount: (video.savesCount || 0) + 1 }
+        return { ...video, savesCount: Math.max(0, (video.savesCount || 1) - 1) }
+      }))
     } catch (error) {
       console.log(error)
     }
@@ -68,6 +82,8 @@ const Home = () => {
       items={videos}
       onLike={likeVideo}
       onSave={saveVideo}
+      initialLikedIds={initialLikedIds}
+      initialSavedIds={initialSavedIds}
       emptyMessage="No videos available."
     />
   )
